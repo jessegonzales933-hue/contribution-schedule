@@ -1,4 +1,8 @@
+const SHEET_ID = '2PACX-1vSSh_DdPRl_ciQr-sO9ePgmFoNTYqssPzUdE5RpPQ3E3gyZmcV1Q5pqIKDHqHWoJMWKgMLK5IfaoF49';
+const GID = '984704368';
+
 const CSV_URL =
+  `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?gid=${GID}&single=true&output=csv`;const CSV_URL =
   'https://docs.google.com/spreadsheets/d/e/2PACX-1vSSh_DdPRl_ciQr-sO9ePgmFoNTYqssPzUdE5RpPQ3E3gyZmcV1Q5pqIKDHqHWoJMWKgMLK5IfaoF49/pub?gid=984704368&single=true&output=csv';
 
 let scheduleData = [];
