@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Consultar mi horario</title>
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+  <main class="container">
+
+    <section class="card">
+
+      <h1>Consultar mi horario</h1>
+
+      <p class="subtitle">
+        Departamento de Contabilidad
+      </p>
+
+      <label for="congregation">
+        Congregación
+      </label>
+
+      <select id="congregation">
+        <option value="">
+          Cargando congregaciones...
+        </option>
+      </select>
+
+      <label for="volunteer">
+        Nombre
+      </label>
+
+      <select id="volunteer" disabled>
+        <option value="">
+          Primero seleccione una congregación
+        </option>
+      </select>
+
+      <button id="searchButton" disabled>
+        Ver mi horario
+      </button>
+
+      <div id="message"></div>
+
+    </section>
+
+    <section
+      id="resultsCard"
+      class="card results-card hidden"
+    >
+
+      <div id="results"></div>
+
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+
+</body>
+</html>
