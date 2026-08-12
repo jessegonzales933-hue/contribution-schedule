@@ -1,159 +1,177 @@
-const SHEET_ID =
-  '2PACX-1vSSh_DdPRl_ciQr-sO9ePgmFoNTYqssPzUdE5RpPQ3E3gyZmcV1Q5pqIKDHqHWoJMWKgMLK5IfaoF49';
-
-const GID = '984704368';
-
-const QUERY_URL =
-  `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/gviz/tq?gid=${GID}&tqx=out:json`;
+const SHEET_URL =
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vSSh_DdPRl_ciQr-sO9ePgmFoNTYqssPzUdE5RpPQ3E3gyZmcV1Q5pqIKDHqHWoJMWKgMLK5IfaoF49/gviz/tq?gid=984704368';
 
 let scheduleData = [];
 
+google.charts.load('current');
+
+google.charts.setOnLoadCallback(loadScheduleData);
+
 
 /* =========================================================
-   LOAD DATA WHEN PAGE OPENS
+   LOAD GOOGLE SHEET
    ========================================================= */
 
-document.addEventListener('DOMContentLoaded', loadScheduleData);
+function loadScheduleData() {
 
+  const congregationSelect =
+    document.getElementById('congregation');
 
-async function loadScheduleData() {
-  const message = document.getElementById('message');
-  const congregationSelect = document.getElementById('congregation');
+  const message =
+    document.getElementById('message');
 
   congregationSelect.innerHTML =
     '<option value="">Cargando congregaciones...</option>';
 
+  message.textContent = '';
+
   try {
-    const freshUrl =
-      QUERY_URL + '&t=' + Date.now();
 
-    const controller = new AbortController();
-
-    const timeout = setTimeout(() => {
-      controller.abort();
-    }, 12000);
-
-    const response = await fetch(freshUrl, {
-      cache: 'no-store',
-      signal: controller.signal
-    });
-
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      throw new Error(
-        'Google Sheets respondió con código ' + response.status
+    const query =
+      new google.visualization.Query(
+        SHEET_URL,
+        {
+          sendMethod: 'scriptInjection'
+        }
       );
-    }
 
-    const rawText = await response.text();
+    query.setTimeout(15);
 
-    scheduleData = parseGoogleVisualizationResponse(rawText);
-
-    if (scheduleData.length === 0) {
-      throw new Error(
-        'No se encontraron datos en PublicSchedule.'
-      );
-    }
-
-    populateCongregations();
-
-    message.textContent = '';
+    query.send(handleQueryResponse);
 
   } catch (error) {
-    console.error('Error cargando horario:', error);
 
-    congregationSelect.innerHTML =
-      '<option value="">No se pudo cargar el horario</option>';
+    console.error(error);
 
-    message.innerHTML =
-      '<p class="error">' +
-      'No se pudo cargar el horario. ' +
-      'Actualice la página e intente nuevamente.' +
-      '</p>';
+    showLoadError();
   }
 }
 
 
 /* =========================================================
-   PARSE GOOGLE VISUALIZATION RESPONSE
+   HANDLE GOOGLE RESPONSE
    ========================================================= */
 
-function parseGoogleVisualizationResponse(text) {
+function handleQueryResponse(response) {
 
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
+  if (response.isError()) {
 
-  if (start === -1 || end === -1) {
-    throw new Error(
-      'Google Sheets devolvió una respuesta inesperada.'
+    console.error(
+      'Google Sheets error:',
+      response.getMessage(),
+      response.getDetailedMessage()
     );
+
+    showLoadError();
+
+    return;
   }
 
-  const jsonText =
-    text.substring(start, end + 1);
+  const table =
+    response.getDataTable();
 
-  const data =
-    JSON.parse(jsonText);
+  if (!table || table.getNumberOfRows() === 0) {
 
-  if (
-    !data.table ||
-    !data.table.cols ||
-    !data.table.rows
+    console.error('PublicSchedule contains no rows.');
+
+    showLoadError();
+
+    return;
+  }
+
+  scheduleData = [];
+
+  const columnCount =
+    table.getNumberOfColumns();
+
+  const rowCount =
+    table.getNumberOfRows();
+
+  const headers = [];
+
+  for (
+    let column = 0;
+    column < columnCount;
+    column++
   ) {
-    throw new Error(
-      'No se pudo interpretar el horario.'
+
+    headers.push(
+      table.getColumnLabel(column)
     );
   }
 
-  const headers =
-    data.table.cols.map(column => {
-      return String(
-        column.label ||
-        column.id ||
-        ''
-      ).trim();
-    });
+  for (
+    let row = 0;
+    row < rowCount;
+    row++
+  ) {
 
-  const rows =
-    data.table.rows.map(row => {
+    const record = {};
 
-      const record = {};
+    for (
+      let column = 0;
+      column < columnCount;
+      column++
+    ) {
 
-      headers.forEach((header, index) => {
+      const header =
+        headers[column];
 
-        const cell =
-          row.c[index];
+      let value =
+        table.getFormattedValue(
+          row,
+          column
+        );
 
-        let value = '';
+      if (
+        value === null ||
+        value === undefined
+      ) {
 
-        if (cell) {
+        value = '';
+      }
 
-          if (
-            cell.f !== undefined &&
-            cell.f !== null
-          ) {
-            value = cell.f;
+      record[header] =
+        String(value).trim();
+    }
 
-          } else if (
-            cell.v !== undefined &&
-            cell.v !== null
-          ) {
-            value = cell.v;
-          }
-        }
+    scheduleData.push(record);
+  }
 
-        record[header] =
-          String(value).trim();
-      });
+  console.log(
+    'Schedule rows loaded:',
+    scheduleData.length
+  );
 
-      return record;
-    });
+  console.log(
+    'First row:',
+    scheduleData[0]
+  );
 
-  return rows.filter(row => {
-    return Object.values(row)
-      .some(value => value !== '');
-  });
+  populateCongregations();
+}
+
+
+/* =========================================================
+   SHOW LOAD ERROR
+   ========================================================= */
+
+function showLoadError() {
+
+  const congregationSelect =
+    document.getElementById('congregation');
+
+  const message =
+    document.getElementById('message');
+
+  congregationSelect.innerHTML =
+    '<option value="">No se pudo cargar</option>';
+
+  message.innerHTML =
+    '<p class="error">' +
+    'No se pudo cargar el horario. ' +
+    'Actualice la página e intente nuevamente.' +
+    '</p>';
 }
 
 
@@ -175,29 +193,67 @@ function populateCongregations() {
   const congregations = [
     ...new Set(
       scheduleData
-        .map(row => getField(row, 'Congregation'))
+
+        .map(row =>
+          getField(
+            row,
+            'Congregation'
+          )
+        )
+
         .filter(Boolean)
     )
-  ].sort((a, b) =>
-    a.localeCompare(b, 'es')
+  ]
+    .sort(
+      (a, b) =>
+        a.localeCompare(
+          b,
+          'es'
+        )
+    );
+
+  console.log(
+    'Congregations:',
+    congregations
   );
 
   congregationSelect.innerHTML =
     '<option value="">Seleccione su congregación</option>';
 
-  congregations.forEach(congregation => {
+  if (
+    congregations.length === 0
+  ) {
 
-    const option =
-      document.createElement('option');
+    congregationSelect.innerHTML =
+      '<option value="">No se encontraron congregaciones</option>';
 
-    option.value =
-      congregation;
+    document.getElementById('message').innerHTML =
+      '<p class="error">' +
+      'El horario se cargó, pero no se encontró la columna Congregation.' +
+      '</p>';
 
-    option.textContent =
-      congregation;
+    return;
+  }
 
-    congregationSelect.appendChild(option);
-  });
+  congregations.forEach(
+    congregation => {
+
+      const option =
+        document.createElement(
+          'option'
+        );
+
+      option.value =
+        congregation;
+
+      option.textContent =
+        congregation;
+
+      congregationSelect.appendChild(
+        option
+      );
+    }
+  );
 
   volunteerSelect.innerHTML =
     '<option value="">Primero seleccione una congregación</option>';
@@ -211,35 +267,53 @@ function populateCongregations() {
 
 
 /* =========================================================
-   WHEN CONGREGATION CHANGES
+   CONGREGATION SELECTION
    ========================================================= */
 
 document
   .getElementById('congregation')
-  .addEventListener('change', function () {
+  .addEventListener(
+    'change',
+    function () {
 
-    populateVolunteers(
-      this.value
-    );
+      populateVolunteers(
+        this.value
+      );
+    }
+  );
 
-  });
 
+/* =========================================================
+   VOLUNTEER DROPDOWN
+   ========================================================= */
 
-function populateVolunteers(congregation) {
+function populateVolunteers(
+  congregation
+) {
 
   const volunteerSelect =
-    document.getElementById('volunteer');
+    document.getElementById(
+      'volunteer'
+    );
 
   const searchButton =
-    document.getElementById('searchButton');
+    document.getElementById(
+      'searchButton'
+    );
 
   const resultsCard =
-    document.getElementById('resultsCard');
+    document.getElementById(
+      'resultsCard'
+    );
 
   const message =
-    document.getElementById('message');
+    document.getElementById(
+      'message'
+    );
 
-  resultsCard.classList.add('hidden');
+  resultsCard
+    .classList
+    .add('hidden');
 
   message.textContent = '';
 
@@ -263,39 +337,60 @@ function populateVolunteers(congregation) {
 
         .filter(row => {
 
-          return normalizeText(
-            getField(row, 'Congregation')
-          ) ===
-          normalizeText(congregation);
-
+          return (
+            normalizeText(
+              getField(
+                row,
+                'Congregation'
+              )
+            ) ===
+            normalizeText(
+              congregation
+            )
+          );
         })
 
         .map(row =>
-          getField(row, 'Volunteer')
+          getField(
+            row,
+            'Volunteer'
+          )
         )
 
         .filter(Boolean)
     )
-  ].sort((a, b) =>
-    a.localeCompare(b, 'es')
-  );
+  ]
+    .sort(
+      (a, b) =>
+        a.localeCompare(
+          b,
+          'es'
+        )
+    );
 
   volunteerSelect.innerHTML =
     '<option value="">Seleccione su nombre</option>';
 
-  volunteers.forEach(volunteer => {
+  volunteers.forEach(
+    volunteer => {
 
-    const option =
-      document.createElement('option');
+      const option =
+        document.createElement(
+          'option'
+        );
 
-    option.value =
-      volunteer;
+      option.value =
+        volunteer;
 
-    option.textContent =
-      volunteer;
+      option.textContent =
+        volunteer;
 
-    volunteerSelect.appendChild(option);
-  });
+      volunteerSelect
+        .appendChild(
+          option
+        );
+    }
+  );
 
   volunteerSelect.disabled =
     false;
@@ -306,18 +401,23 @@ function populateVolunteers(congregation) {
 
 
 /* =========================================================
-   ENABLE SEARCH BUTTON
+   VOLUNTEER SELECTION
    ========================================================= */
 
 document
   .getElementById('volunteer')
-  .addEventListener('change', function () {
+  .addEventListener(
+    'change',
+    function () {
 
-    document
-      .getElementById('searchButton')
-      .disabled = !this.value;
-
-  });
+      document
+        .getElementById(
+          'searchButton'
+        )
+        .disabled =
+          !this.value;
+    }
+  );
 
 
 /* =========================================================
@@ -325,8 +425,13 @@ document
    ========================================================= */
 
 document
-  .getElementById('searchButton')
-  .addEventListener('click', showSchedule);
+  .getElementById(
+    'searchButton'
+  )
+  .addEventListener(
+    'click',
+    showSchedule
+  );
 
 
 /* =========================================================
@@ -337,22 +442,32 @@ function showSchedule() {
 
   const congregation =
     document
-      .getElementById('congregation')
+      .getElementById(
+        'congregation'
+      )
       .value;
 
   const volunteer =
     document
-      .getElementById('volunteer')
+      .getElementById(
+        'volunteer'
+      )
       .value;
 
   const message =
-    document.getElementById('message');
+    document.getElementById(
+      'message'
+    );
 
   const resultsCard =
-    document.getElementById('resultsCard');
+    document.getElementById(
+      'resultsCard'
+    );
 
   const results =
-    document.getElementById('results');
+    document.getElementById(
+      'results'
+    );
 
   if (
     !congregation ||
@@ -364,34 +479,57 @@ function showSchedule() {
       'Seleccione su congregación y su nombre.' +
       '</p>';
 
-    resultsCard.classList.add('hidden');
+    resultsCard
+      .classList
+      .add('hidden');
 
     return;
   }
 
   const assignments =
-    scheduleData.filter(row => {
+    scheduleData.filter(
+      row => {
 
-      const rowCongregation =
-        getField(row, 'Congregation');
+        const rowCongregation =
+          getField(
+            row,
+            'Congregation'
+          );
 
-      const rowVolunteer =
-        getField(row, 'Volunteer');
+        const rowVolunteer =
+          getField(
+            row,
+            'Volunteer'
+          );
 
-      const rowStatus =
-        getField(row, 'Status');
+        const status =
+          getField(
+            row,
+            'Status'
+          );
 
-      return (
-        normalizeText(rowCongregation) ===
-          normalizeText(congregation) &&
+        return (
+          normalizeText(
+            rowCongregation
+          ) ===
+            normalizeText(
+              congregation
+            ) &&
 
-        normalizeText(rowVolunteer) ===
-          normalizeText(volunteer) &&
+          normalizeText(
+            rowVolunteer
+          ) ===
+            normalizeText(
+              volunteer
+            ) &&
 
-        normalizeText(rowStatus) ===
-          'asignado'
-      );
-    });
+          normalizeText(
+            status
+          ) ===
+            'asignado'
+        );
+      }
+    );
 
   if (
     assignments.length === 0
@@ -402,7 +540,9 @@ function showSchedule() {
       'No se encontró un horario para este voluntario.' +
       '</p>';
 
-    resultsCard.classList.add('hidden');
+    resultsCard
+      .classList
+      .add('hidden');
 
     return;
   }
@@ -410,45 +550,60 @@ function showSchedule() {
   message.textContent = '';
 
   let html = `
-    <h2>${escapeHtml(volunteer)}</h2>
+    <h2>
+      ${escapeHtml(volunteer)}
+    </h2>
 
     <p>
-      <strong>Congregación:</strong>
+      <strong>
+        Congregación:
+      </strong>
       ${escapeHtml(congregation)}
     </p>
   `;
 
-  assignments.forEach(assignment => {
+  assignments.forEach(
+    assignment => {
 
-    const shift =
-      getField(assignment, 'Shift');
+      const shift =
+        getField(
+          assignment,
+          'Shift'
+        );
 
-    const time =
-      getField(assignment, 'Time');
+      const time =
+        getField(
+          assignment,
+          'Time'
+        );
 
-    const box =
-      getField(assignment, 'Box');
+      const box =
+        getField(
+          assignment,
+          'Box'
+        );
 
-    html += `
-      <div class="assignment">
+      html += `
+        <div class="assignment">
 
-        <div class="assignment-title">
-          ${escapeHtml(shift)}
+          <div class="assignment-title">
+            ${escapeHtml(shift)}
+          </div>
+
+          <div class="assignment-line">
+            <strong>Horario:</strong>
+            ${escapeHtml(time)}
+          </div>
+
+          <div class="assignment-line">
+            <strong>Caja:</strong>
+            ${escapeHtml(box)}
+          </div>
+
         </div>
-
-        <div class="assignment-line">
-          <strong>Horario:</strong>
-          ${escapeHtml(time)}
-        </div>
-
-        <div class="assignment-line">
-          <strong>Caja:</strong>
-          ${escapeHtml(box)}
-        </div>
-
-      </div>
-    `;
-  });
+      `;
+    }
+  );
 
   results.innerHTML =
     html;
@@ -460,32 +615,47 @@ function showSchedule() {
 
 
 /* =========================================================
-   FIELD HELPER
+   FIELD LOOKUP
    ========================================================= */
 
-function getField(row, expectedName) {
+function getField(
+  row,
+  expectedName
+) {
 
-  const exactMatch =
-    Object.keys(row).find(key => {
-      return normalizeText(key) ===
-        normalizeText(expectedName);
-    });
+  const matchingKey =
+    Object.keys(row)
+      .find(key => {
 
-  if (!exactMatch) {
+        return (
+          normalizeText(key) ===
+          normalizeText(
+            expectedName
+          )
+        );
+      });
+
+  if (!matchingKey) {
     return '';
   }
 
-  return row[exactMatch] || '';
+  return (
+    row[matchingKey] || ''
+  );
 }
 
 
 /* =========================================================
-   TEXT NORMALIZATION
+   NORMALIZE TEXT
    ========================================================= */
 
-function normalizeText(value) {
+function normalizeText(
+  value
+) {
 
-  return String(value || '')
+  return String(
+    value || ''
+  )
     .trim()
     .toLowerCase()
     .normalize('NFD')
@@ -497,13 +667,17 @@ function normalizeText(value) {
 
 
 /* =========================================================
-   HTML SAFETY
+   ESCAPE HTML
    ========================================================= */
 
-function escapeHtml(value) {
+function escapeHtml(
+  value
+) {
 
   const div =
-    document.createElement('div');
+    document.createElement(
+      'div'
+    );
 
   div.textContent =
     value || '';
