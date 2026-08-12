@@ -11,28 +11,62 @@ document.addEventListener('DOMContentLoaded', loadScheduleData);
 
 async function loadScheduleData() {
   const message = document.getElementById('message');
+  const congregationSelect = document.getElementById('congregation');
+
+  congregationSelect.innerHTML =
+    '<option value="">Cargando congregaciones...</option>';
 
   try {
-    const response = await fetch(CSV_URL, {
-      cache: 'no-store'
+    const freshUrl = CSV_URL + '&t=' + Date.now();
+
+    const controller = new AbortController();
+
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 12000);
+
+    const response = await fetch(freshUrl, {
+      cache: 'no-store',
+      signal: controller.signal
     });
 
+    clearTimeout(timeout);
+
     if (!response.ok) {
-      throw new Error('No se pudo cargar el horario.');
+      throw new Error(
+        'Google Sheets respondió con código ' + response.status
+      );
     }
 
     const csvText = await response.text();
 
+    if (!csvText.trim()) {
+      throw new Error('El horario publicado está vacío.');
+    }
+
     scheduleData = parseCSV(csvText);
+
+    if (scheduleData.length === 0) {
+      throw new Error('No se encontraron datos del horario.');
+    }
 
     populateCongregations();
 
     message.textContent = '';
+
   } catch (error) {
-    console.error(error);
+    console.error('Error cargando horario:', error);
+
+    congregationSelect.innerHTML =
+      '<option value="">No se pudo cargar el horario</option>';
 
     message.innerHTML =
-      '<p class="error">No se pudo cargar el horario. Intente nuevamente.</p>';
+      '<p class="error">' +
+      'No se pudo cargar el horario. ' +
+      'Actualice la página e intente nuevamente.' +
+      '</p>';
+  }
+}
   }
 }
 
