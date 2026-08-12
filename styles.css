@@ -1,0 +1,128 @@
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f3f5f7;
+  color: #222;
+}
+
+.container {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  box-sizing: border-box;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+h1 {
+  margin: 0;
+  text-align: center;
+  font-size: 28px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #666;
+  margin-top: 8px;
+  margin-bottom: 28px;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin-top: 18px;
+  margin-bottom: 7px;
+}
+
+select,
+button {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px;
+  font-size: 16px;
+  border-radius: 8px;
+}
+
+select {
+  border: 1px solid #bbb;
+  background: white;
+}
+
+button {
+  margin-top: 22px;
+  border: none;
+  background: #1a73e8;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+button:disabled {
+  background: #aaa;
+  cursor: not-allowed;
+}
+
+#message {
+  margin-top: 18px;
+  text-align: center;
+}
+
+.results-card h2 {
+  margin-top: 0;
+}
+
+.assignment {
+  margin-top: 14px;
+  padding: 16px;
+  background: #f5f9ff;
+  border-left: 5px solid #1a73e8;
+  border-radius: 8px;
+}
+
+.assignment-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.assignment-line {
+  margin: 4px 0;
+}
+
+.hidden {
+  display: none;
+}
+
+.error {
+  color: #b00020;
+  font-weight: bold;
+}
+
+.success {
+  color: #137333;
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 14px;
+  }
+
+  .card {
+    padding: 20px;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+}
