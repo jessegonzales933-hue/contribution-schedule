@@ -248,21 +248,31 @@ function showSchedule() {
   `;
 
   assignments.forEach(assignment => {
+    const type = getField(assignment, 'Type');
+    const shift = getField(assignment, 'Shift');
+    const time = getField(assignment, 'Time');
+    const assignmentName = getField(assignment, 'Assignment');
+
     html += `
       <div class="assignment">
 
         <div class="assignment-title">
-          ${escapeHtml(getField(assignment, 'Shift'))}
+          ${escapeHtml(type)}
+        </div>
+
+        <div class="assignment-line">
+          <strong>Turno:</strong>
+          ${escapeHtml(shift)}
         </div>
 
         <div class="assignment-line">
           <strong>Horario:</strong>
-          ${escapeHtml(getField(assignment, 'Time'))}
+          ${escapeHtml(time)}
         </div>
 
         <div class="assignment-line">
-          <strong>Caja:</strong>
-          ${escapeHtml(getField(assignment, 'Box'))}
+          <strong>Asignación:</strong>
+          ${escapeHtml(assignmentName)}
         </div>
 
       </div>
