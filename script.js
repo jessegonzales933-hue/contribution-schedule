@@ -1,686 +1,296 @@
-const SHEET_URL =
-  'https://docs.google.com/spreadsheets/d/e/2PACX-1vSSh_DdPRl_ciQr-sO9ePgmFoNTYqssPzUdE5RpPQ3E3gyZmcV1Q5pqIKDHqHWoJMWKgMLK5IfaoF49/gviz/tq?gid=984704368';
+const CSV_URL = 'schedule.csv';
 
 let scheduleData = [];
 
-google.charts.load('current');
+document.addEventListener('DOMContentLoaded', loadScheduleData);
 
-google.charts.setOnLoadCallback(loadScheduleData);
-
-
-/* =========================================================
-   LOAD GOOGLE SHEET
-   ========================================================= */
-
-function loadScheduleData() {
-
-  const congregationSelect =
-    document.getElementById('congregation');
-
-  const message =
-    document.getElementById('message');
+async function loadScheduleData() {
+  const message = document.getElementById('message');
+  const congregationSelect = document.getElementById('congregation');
 
   congregationSelect.innerHTML =
     '<option value="">Cargando congregaciones...</option>';
 
-  message.textContent = '';
-
   try {
+    const response = await fetch(CSV_URL + '?t=' + Date.now(), {
+      cache: 'no-store'
+    });
 
-    const query =
-      new google.visualization.Query(
-        SHEET_URL,
-        {
-          sendMethod: 'scriptInjection'
-        }
-      );
-
-    query.setTimeout(15);
-
-    query.send(handleQueryResponse);
-
-  } catch (error) {
-
-    console.error(error);
-
-    showLoadError();
-  }
-}
-
-
-/* =========================================================
-   HANDLE GOOGLE RESPONSE
-   ========================================================= */
-
-function handleQueryResponse(response) {
-
-  if (response.isError()) {
-
-    console.error(
-      'Google Sheets error:',
-      response.getMessage(),
-      response.getDetailedMessage()
-    );
-
-    showLoadError();
-
-    return;
-  }
-
-  const table =
-    response.getDataTable();
-
-  if (!table || table.getNumberOfRows() === 0) {
-
-    console.error('PublicSchedule contains no rows.');
-
-    showLoadError();
-
-    return;
-  }
-
-  scheduleData = [];
-
-  const columnCount =
-    table.getNumberOfColumns();
-
-  const rowCount =
-    table.getNumberOfRows();
-
-  const headers = [];
-
-  for (
-    let column = 0;
-    column < columnCount;
-    column++
-  ) {
-
-    headers.push(
-      table.getColumnLabel(column)
-    );
-  }
-
-  for (
-    let row = 0;
-    row < rowCount;
-    row++
-  ) {
-
-    const record = {};
-
-    for (
-      let column = 0;
-      column < columnCount;
-      column++
-    ) {
-
-      const header =
-        headers[column];
-
-      let value =
-        table.getFormattedValue(
-          row,
-          column
-        );
-
-      if (
-        value === null ||
-        value === undefined
-      ) {
-
-        value = '';
-      }
-
-      record[header] =
-        String(value).trim();
+    if (!response.ok) {
+      throw new Error('No se pudo cargar schedule.csv');
     }
 
-    scheduleData.push(record);
+    const csvText = await response.text();
+
+    scheduleData = parseCSV(csvText);
+
+    if (scheduleData.length === 0) {
+      throw new Error('El horario está vacío.');
+    }
+
+    populateCongregations();
+
+    message.textContent = '';
+  } catch (error) {
+    console.error(error);
+
+    congregationSelect.innerHTML =
+      '<option value="">No se pudo cargar el horario</option>';
+
+    message.innerHTML =
+      '<p class="error">No se pudo cargar el horario. Actualice la página e intente nuevamente.</p>';
+  }
+}
+
+function parseCSV(csvText) {
+  const rows = [];
+  let row = [];
+  let cell = '';
+  let insideQuotes = false;
+
+  for (let i = 0; i < csvText.length; i++) {
+    const char = csvText[i];
+    const nextChar = csvText[i + 1];
+
+    if (char === '"' && insideQuotes && nextChar === '"') {
+      cell += '"';
+      i++;
+    } else if (char === '"') {
+      insideQuotes = !insideQuotes;
+    } else if (char === ',' && !insideQuotes) {
+      row.push(cell);
+      cell = '';
+    } else if ((char === '\n' || char === '\r') && !insideQuotes) {
+      if (char === '\r' && nextChar === '\n') {
+        i++;
+      }
+
+      row.push(cell);
+
+      if (row.some(value => value.trim() !== '')) {
+        rows.push(row);
+      }
+
+      row = [];
+      cell = '';
+    } else {
+      cell += char;
+    }
   }
 
-  console.log(
-    'Schedule rows loaded:',
-    scheduleData.length
-  );
+  if (cell.length > 0 || row.length > 0) {
+    row.push(cell);
 
-  console.log(
-    'First row:',
-    scheduleData[0]
-  );
+    if (row.some(value => value.trim() !== '')) {
+      rows.push(row);
+    }
+  }
 
-  populateCongregations();
+  if (rows.length < 2) {
+    return [];
+  }
+
+  const headers = rows[0].map(header => header.trim());
+
+  return rows.slice(1).map(rowValues => {
+    const record = {};
+
+    headers.forEach((header, index) => {
+      record[header] = (rowValues[index] || '').trim();
+    });
+
+    return record;
+  });
 }
-
-
-/* =========================================================
-   SHOW LOAD ERROR
-   ========================================================= */
-
-function showLoadError() {
-
-  const congregationSelect =
-    document.getElementById('congregation');
-
-  const message =
-    document.getElementById('message');
-
-  congregationSelect.innerHTML =
-    '<option value="">No se pudo cargar</option>';
-
-  message.innerHTML =
-    '<p class="error">' +
-    'No se pudo cargar el horario. ' +
-    'Actualice la página e intente nuevamente.' +
-    '</p>';
-}
-
-
-/* =========================================================
-   CONGREGATION DROPDOWN
-   ========================================================= */
 
 function populateCongregations() {
-
-  const congregationSelect =
-    document.getElementById('congregation');
-
-  const volunteerSelect =
-    document.getElementById('volunteer');
-
-  const searchButton =
-    document.getElementById('searchButton');
+  const congregationSelect = document.getElementById('congregation');
+  const volunteerSelect = document.getElementById('volunteer');
+  const searchButton = document.getElementById('searchButton');
 
   const congregations = [
     ...new Set(
       scheduleData
-
-        .map(row =>
-          getField(
-            row,
-            'Congregation'
-          )
-        )
-
+        .map(row => getField(row, 'Congregation'))
         .filter(Boolean)
     )
-  ]
-    .sort(
-      (a, b) =>
-        a.localeCompare(
-          b,
-          'es'
-        )
-    );
-
-  console.log(
-    'Congregations:',
-    congregations
-  );
+  ].sort((a, b) => a.localeCompare(b, 'es'));
 
   congregationSelect.innerHTML =
     '<option value="">Seleccione su congregación</option>';
 
-  if (
-    congregations.length === 0
-  ) {
-
-    congregationSelect.innerHTML =
-      '<option value="">No se encontraron congregaciones</option>';
-
-    document.getElementById('message').innerHTML =
-      '<p class="error">' +
-      'El horario se cargó, pero no se encontró la columna Congregation.' +
-      '</p>';
-
-    return;
-  }
-
-  congregations.forEach(
-    congregation => {
-
-      const option =
-        document.createElement(
-          'option'
-        );
-
-      option.value =
-        congregation;
-
-      option.textContent =
-        congregation;
-
-      congregationSelect.appendChild(
-        option
-      );
-    }
-  );
+  congregations.forEach(congregation => {
+    const option = document.createElement('option');
+    option.value = congregation;
+    option.textContent = congregation;
+    congregationSelect.appendChild(option);
+  });
 
   volunteerSelect.innerHTML =
     '<option value="">Primero seleccione una congregación</option>';
 
-  volunteerSelect.disabled =
-    true;
-
-  searchButton.disabled =
-    true;
+  volunteerSelect.disabled = true;
+  searchButton.disabled = true;
 }
-
-
-/* =========================================================
-   CONGREGATION SELECTION
-   ========================================================= */
 
 document
   .getElementById('congregation')
-  .addEventListener(
-    'change',
-    function () {
+  .addEventListener('change', function () {
+    populateVolunteers(this.value);
+  });
 
-      populateVolunteers(
-        this.value
-      );
-    }
-  );
+function populateVolunteers(congregation) {
+  const volunteerSelect = document.getElementById('volunteer');
+  const searchButton = document.getElementById('searchButton');
+  const resultsCard = document.getElementById('resultsCard');
+  const message = document.getElementById('message');
 
-
-/* =========================================================
-   VOLUNTEER DROPDOWN
-   ========================================================= */
-
-function populateVolunteers(
-  congregation
-) {
-
-  const volunteerSelect =
-    document.getElementById(
-      'volunteer'
-    );
-
-  const searchButton =
-    document.getElementById(
-      'searchButton'
-    );
-
-  const resultsCard =
-    document.getElementById(
-      'resultsCard'
-    );
-
-  const message =
-    document.getElementById(
-      'message'
-    );
-
-  resultsCard
-    .classList
-    .add('hidden');
-
+  resultsCard.classList.add('hidden');
   message.textContent = '';
 
   if (!congregation) {
-
     volunteerSelect.innerHTML =
       '<option value="">Primero seleccione una congregación</option>';
 
-    volunteerSelect.disabled =
-      true;
-
-    searchButton.disabled =
-      true;
-
+    volunteerSelect.disabled = true;
+    searchButton.disabled = true;
     return;
   }
 
   const volunteers = [
     ...new Set(
       scheduleData
-
-        .filter(row => {
-
-          return (
-            normalizeText(
-              getField(
-                row,
-                'Congregation'
-              )
-            ) ===
-            normalizeText(
-              congregation
-            )
-          );
-        })
-
-        .map(row =>
-          getField(
-            row,
-            'Volunteer'
-          )
+        .filter(row =>
+          normalizeText(getField(row, 'Congregation')) ===
+          normalizeText(congregation)
         )
-
+        .map(row => getField(row, 'Volunteer'))
         .filter(Boolean)
     )
-  ]
-    .sort(
-      (a, b) =>
-        a.localeCompare(
-          b,
-          'es'
-        )
-    );
+  ].sort((a, b) => a.localeCompare(b, 'es'));
 
   volunteerSelect.innerHTML =
     '<option value="">Seleccione su nombre</option>';
 
-  volunteers.forEach(
-    volunteer => {
+  volunteers.forEach(volunteer => {
+    const option = document.createElement('option');
+    option.value = volunteer;
+    option.textContent = volunteer;
+    volunteerSelect.appendChild(option);
+  });
 
-      const option =
-        document.createElement(
-          'option'
-        );
-
-      option.value =
-        volunteer;
-
-      option.textContent =
-        volunteer;
-
-      volunteerSelect
-        .appendChild(
-          option
-        );
-    }
-  );
-
-  volunteerSelect.disabled =
-    false;
-
-  searchButton.disabled =
-    true;
+  volunteerSelect.disabled = false;
+  searchButton.disabled = true;
 }
-
-
-/* =========================================================
-   VOLUNTEER SELECTION
-   ========================================================= */
 
 document
   .getElementById('volunteer')
-  .addEventListener(
-    'change',
-    function () {
-
-      document
-        .getElementById(
-          'searchButton'
-        )
-        .disabled =
-          !this.value;
-    }
-  );
-
-
-/* =========================================================
-   SEARCH BUTTON
-   ========================================================= */
+  .addEventListener('change', function () {
+    document.getElementById('searchButton').disabled = !this.value;
+  });
 
 document
-  .getElementById(
-    'searchButton'
-  )
-  .addEventListener(
-    'click',
-    showSchedule
-  );
-
-
-/* =========================================================
-   DISPLAY SCHEDULE
-   ========================================================= */
+  .getElementById('searchButton')
+  .addEventListener('click', showSchedule);
 
 function showSchedule() {
-
   const congregation =
-    document
-      .getElementById(
-        'congregation'
-      )
-      .value;
+    document.getElementById('congregation').value;
 
   const volunteer =
-    document
-      .getElementById(
-        'volunteer'
-      )
-      .value;
+    document.getElementById('volunteer').value;
 
   const message =
-    document.getElementById(
-      'message'
-    );
+    document.getElementById('message');
 
   const resultsCard =
-    document.getElementById(
-      'resultsCard'
-    );
+    document.getElementById('resultsCard');
 
   const results =
-    document.getElementById(
-      'results'
-    );
+    document.getElementById('results');
 
-  if (
-    !congregation ||
-    !volunteer
-  ) {
-
+  if (!congregation || !volunteer) {
     message.innerHTML =
-      '<p class="error">' +
-      'Seleccione su congregación y su nombre.' +
-      '</p>';
+      '<p class="error">Seleccione su congregación y su nombre.</p>';
 
-    resultsCard
-      .classList
-      .add('hidden');
-
+    resultsCard.classList.add('hidden');
     return;
   }
 
-  const assignments =
-    scheduleData.filter(
-      row => {
-
-        const rowCongregation =
-          getField(
-            row,
-            'Congregation'
-          );
-
-        const rowVolunteer =
-          getField(
-            row,
-            'Volunteer'
-          );
-
-        const status =
-          getField(
-            row,
-            'Status'
-          );
-
-        return (
-          normalizeText(
-            rowCongregation
-          ) ===
-            normalizeText(
-              congregation
-            ) &&
-
-          normalizeText(
-            rowVolunteer
-          ) ===
-            normalizeText(
-              volunteer
-            ) &&
-
-          normalizeText(
-            status
-          ) ===
-            'asignado'
-        );
-      }
+  const assignments = scheduleData.filter(row => {
+    return (
+      normalizeText(getField(row, 'Congregation')) ===
+        normalizeText(congregation) &&
+      normalizeText(getField(row, 'Volunteer')) ===
+        normalizeText(volunteer) &&
+      normalizeText(getField(row, 'Status')) ===
+        'asignado'
     );
+  });
 
-  if (
-    assignments.length === 0
-  ) {
-
+  if (assignments.length === 0) {
     message.innerHTML =
-      '<p class="error">' +
-      'No se encontró un horario para este voluntario.' +
-      '</p>';
+      '<p class="error">No se encontró un horario para este voluntario.</p>';
 
-    resultsCard
-      .classList
-      .add('hidden');
-
+    resultsCard.classList.add('hidden');
     return;
   }
 
   message.textContent = '';
 
   let html = `
-    <h2>
-      ${escapeHtml(volunteer)}
-    </h2>
+    <h2>${escapeHtml(volunteer)}</h2>
 
     <p>
-      <strong>
-        Congregación:
-      </strong>
+      <strong>Congregación:</strong>
       ${escapeHtml(congregation)}
     </p>
   `;
 
-  assignments.forEach(
-    assignment => {
+  assignments.forEach(assignment => {
+    html += `
+      <div class="assignment">
 
-      const shift =
-        getField(
-          assignment,
-          'Shift'
-        );
-
-      const time =
-        getField(
-          assignment,
-          'Time'
-        );
-
-      const box =
-        getField(
-          assignment,
-          'Box'
-        );
-
-      html += `
-        <div class="assignment">
-
-          <div class="assignment-title">
-            ${escapeHtml(shift)}
-          </div>
-
-          <div class="assignment-line">
-            <strong>Horario:</strong>
-            ${escapeHtml(time)}
-          </div>
-
-          <div class="assignment-line">
-            <strong>Caja:</strong>
-            ${escapeHtml(box)}
-          </div>
-
+        <div class="assignment-title">
+          ${escapeHtml(getField(assignment, 'Shift'))}
         </div>
-      `;
-    }
-  );
 
-  results.innerHTML =
-    html;
+        <div class="assignment-line">
+          <strong>Horario:</strong>
+          ${escapeHtml(getField(assignment, 'Time'))}
+        </div>
 
-  resultsCard
-    .classList
-    .remove('hidden');
+        <div class="assignment-line">
+          <strong>Caja:</strong>
+          ${escapeHtml(getField(assignment, 'Box'))}
+        </div>
+
+      </div>
+    `;
+  });
+
+  results.innerHTML = html;
+  resultsCard.classList.remove('hidden');
 }
 
-
-/* =========================================================
-   FIELD LOOKUP
-   ========================================================= */
-
-function getField(
-  row,
-  expectedName
-) {
-
-  const matchingKey =
-    Object.keys(row)
-      .find(key => {
-
-        return (
-          normalizeText(key) ===
-          normalizeText(
-            expectedName
-          )
-        );
-      });
-
-  if (!matchingKey) {
-    return '';
-  }
-
-  return (
-    row[matchingKey] || ''
+function getField(row, expectedName) {
+  const matchingKey = Object.keys(row).find(key =>
+    normalizeText(key) === normalizeText(expectedName)
   );
+
+  return matchingKey ? row[matchingKey] || '' : '';
 }
 
-
-/* =========================================================
-   NORMALIZE TEXT
-   ========================================================= */
-
-function normalizeText(
-  value
-) {
-
-  return String(
-    value || ''
-  )
+function normalizeText(value) {
+  return String(value || '')
     .trim()
     .toLowerCase()
     .normalize('NFD')
-    .replace(
-      /[\u0300-\u036f]/g,
-      ''
-    );
+    .replace(/[\u0300-\u036f]/g, '');
 }
 
-
-/* =========================================================
-   ESCAPE HTML
-   ========================================================= */
-
-function escapeHtml(
-  value
-) {
-
-  const div =
-    document.createElement(
-      'div'
-    );
-
-  div.textContent =
-    value || '';
-
+function escapeHtml(value) {
+  const div = document.createElement('div');
+  div.textContent = value || '';
   return div.innerHTML;
 }
