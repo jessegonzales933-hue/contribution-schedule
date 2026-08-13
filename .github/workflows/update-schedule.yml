@@ -1,0 +1,38 @@
+name: Update Volunteer Schedule
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update-schedule:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Google Sheet
+        run: |
+          curl -L \
+          "https://docs.google.com/spreadsheets/d/e/2PACX-1vSSh_DdPRl_ciQr-sO9ePgmFoNTYqssPzUdE5RpPQ3E3gyZmcV1Q5pqIKDHqHWoJMWKgMLK5IfaoF49/pub?gid=984704368&single=true&output=csv" \
+          -o schedule.csv
+
+      - name: Commit updated schedule
+        run: |
+          git config user.name "Schedule Updater"
+          git config user.email "actions@github.com"
+
+          git add schedule.csv
+
+          if git diff --cached --quiet; then
+            echo "No schedule changes."
+          else
+            git commit -m "Update volunteer schedule"
+            git push
+          fi
