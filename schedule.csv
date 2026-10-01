@@ -1,32 +1,42 @@
 Type,Shift,Time,Assignment,Volunteer,Congregation,Status
-Caja de Contribuciones,Shift 1,8:15–9:30,Caja 1,Jessica Torres,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 1,8:15–9:30,Caja 2,Lillian Rivera,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 1,8:15–9:30,Caja 3,Reyna Vega,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 1,8:15–9:30,Caja 4,Elda Gonzales,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 1,8:15–9:30,Caja 5,Cerena Mandujano,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 1,8:15–9:30,Caja 6,Nohemi Márquez,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 1,8:15–9:30,Caja 7,Jesse Gonzales,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 2,9:30–10:45,Caja 1,Jesse Gonzales,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 2,9:30–10:45,Caja 2,Jessica Torres,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 2,9:30–10:45,Caja 3,Lillian Rivera,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 2,9:30–10:45,Caja 4,Cerena Mandujano,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 2,9:30–10:45,Caja 5,Elda Gonzales,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 2,9:30–10:45,Caja 6,Reyna Vega,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 2,9:30–10:45,Caja 7,Nohemi Márquez,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 3,10:45–12:00,Caja 1,Gloria Ortiz,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 3,10:45–12:00,Caja 2,Nohemi Márquez,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 3,10:45–12:00,Caja 3,Reyna Vega,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 3,10:45–12:00,Caja 4,Elda Gonzales,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 3,10:45–12:00,Caja 5,Jesse Gonzales,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 3,10:45–12:00,Caja 6,Jessica Torres,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 4,12:00–1:15,Caja 1,Gloria Ortiz,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 4,12:00–1:15,Caja 2,Elda Gonzales,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 4,12:00–1:15,Caja 3,Jessica Torres,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 4,12:00–1:15,Caja 4,Reyna Vega,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 4,12:00–1:15,Caja 5,Jesse Gonzales,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 4,12:00–1:15,Caja 6,Nohemi Márquez,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 5,1:15–2:30,Caja 1,Jessica Torres,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 5,1:15–2:30,Caja 2,Reyna Vega,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 5,1:15–2:30,Caja 3,Elda Gonzales,Helotes Ranch,Asignado
-Caja de Contribuciones,Shift 5,1:15–2:30,Caja 4,Nohemi Márquez,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 1,8:00 am - 9:00 am,Caja 1,Yaniri,Villa Hermosa,Asignado
+Caja de Contribuciones,Shift 1,8:00 am - 9:00 am,Caja 2,Aurora Bernal,Villa Hermosa,Asignado
+Caja de Contribuciones,Shift 1,8:00 am - 9:00 am,Caja 3,Claudia Bernal,Villa Hermosa,Asignado
+Caja de Contribuciones,Shift 1,8:00 am - 9:00 am,Caja 4,Jesse Gonzales,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 1,8:00 am - 9:00 am,Caja 5,Jessica Torres,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 1,8:00 am - 9:00 am,Caja 6,Lillian Rivera,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 1,8:00 am - 9:00 am,Caja 7,Cerena Mandujano,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 1,8:00 am - 9:00 am,Caja 8,Nohemi Márquez,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 2,9:00 am - 10:00 am,Caja 1,Joselin Reyes,Oakland,Asignado
+Caja de Contribuciones,Shift 2,9:00 am - 10:00 am,Caja 2,Nohemi Esquivel,Villa Hermosa,Asignado
+Caja de Contribuciones,Shift 2,9:00 am - 10:00 am,Caja 3,María Isabel Zamora,Villa Hermosa,Asignado
+Caja de Contribuciones,Shift 2,9:00 am - 10:00 am,Caja 4,Elda Gonzales,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 2,9:00 am - 10:00 am,Caja 5,Reyna Y Vega,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 2,9:00 am - 10:00 am,Caja 6,Reyna Vega,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 2,9:00 am - 10:00 am,Caja 7,Jessica Torres,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 2,9:00 am - 10:00 am,Caja 8,Cerena Mandujano,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 3,12:00 pm - 12:45 pm,Caja 1,Jhoselyn Fuentes,Oakland,Asignado
+Caja de Contribuciones,Shift 3,12:00 pm - 12:45 pm,Caja 2,Nohemi Esquivel,Villa Hermosa,Asignado
+Caja de Contribuciones,Shift 3,12:00 pm - 12:45 pm,Caja 3,Norma Ramírez,Villa Hermosa,Asignado
+Caja de Contribuciones,Shift 3,12:00 pm - 12:45 pm,Caja 4,Gloria Ortiz,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 3,12:00 pm - 12:45 pm,Caja 5,Reyna Vega,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 3,12:00 pm - 12:45 pm,Caja 6,Reyna Y Vega,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 3,12:00 pm - 12:45 pm,Caja 7,Nohemi Márquez,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 3,12:00 pm - 12:45 pm,Caja 8,Jesse Gonzales,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 4,12:45 pm - 1:30 pm,Caja 1,Alma serna,Villa Hermosa,Asignado
+Caja de Contribuciones,Shift 4,12:45 pm - 1:30 pm,Caja 2,Vanessa Gomez,Bandera,Asignado
+Caja de Contribuciones,Shift 4,12:45 pm - 1:30 pm,Caja 3,Lorena Mendoza,Bandera,Asignado
+Caja de Contribuciones,Shift 4,12:45 pm - 1:30 pm,Caja 4,Elda Gonzales,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 4,12:45 pm - 1:30 pm,Caja 5,Gloria Ortiz,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 4,12:45 pm - 1:30 pm,Caja 6,Reyna Vega,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 4,12:45 pm - 1:30 pm,Caja 7,Reyna Y Vega,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 4,12:45 pm - 1:30 pm,Caja 8,Jesse Gonzales,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 5,3:45 pm - 5:00 pm,Caja 1,Nerina Pantoja,Villa Hermosa,Asignado
+Caja de Contribuciones,Shift 5,3:45 pm - 5:00 pm,Caja 2,Yulissa Chapa,Bandera,Asignado
+Caja de Contribuciones,Shift 5,3:45 pm - 5:00 pm,Caja 3,Gardenia Medina,Oakland,Asignado
+Caja de Contribuciones,Shift 5,3:45 pm - 5:00 pm,Caja 4,Elda Gonzales,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 5,3:45 pm - 5:00 pm,Caja 5,Nohemi Márquez,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 5,3:45 pm - 5:00 pm,Caja 6,Jessica Torres,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 5,3:45 pm - 5:00 pm,Caja 7,Reyna Vega,Helotes Ranch,Asignado
+Caja de Contribuciones,Shift 5,3:45 pm - 5:00 pm,Caja 8,Reyna Y Vega,Helotes Ranch,Asignado
 Punto de Información,Info Shift 1,8:20 AM - 10:00 AM,Punto de Información 1,Elda Gonzalez,Helotes Ranch,Asignado
