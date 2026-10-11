@@ -1,0 +1,359 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Capitanes - Contabilidad</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f3f5f8;
+      color: #243247;
+    }
+
+    header {
+      background: #174477;
+      color: white;
+      padding: 24px 16px;
+      text-align: center;
+    }
+
+    header h1 { margin: 0 0 8px; font-size: 24px; }
+    header p { margin: 0; font-size: 14px; }
+
+    main {
+      max-width: 1050px;
+      margin: 24px auto;
+      padding: 0 14px;
+    }
+
+    .panel {
+      background: white;
+      padding: 18px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px #0000000a;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #ccd3df;
+      border-radius: 8px;
+      font-size: 15px;
+      background: white;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .stat {
+      text-align: center;
+      background: #edf3fa;
+      border-radius: 9px;
+      padding: 14px 6px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 26px;
+      color: #174477;
+    }
+
+    .stat span { font-size: 12px; }
+
+    .assignment {
+      padding: 15px;
+      border: 1px solid #e0e5ec;
+      border-left: 4px solid #174477;
+      border-radius: 9px;
+      margin-top: 10px;
+    }
+
+    .assignment.info { border-left-color: #16866c; }
+
+    .assignment h3 {
+      margin: 0 0 8px;
+      font-size: 17px;
+    }
+
+    .assignment p {
+      margin: 5px 0;
+      font-size: 14px;
+    }
+
+    .time {
+      font-weight: bold;
+      color: #174477;
+    }
+
+    .status { color: #667085; font-size: 14px; }
+    .error { color: #a52323; }
+
+    @media (max-width: 480px) {
+      .stats { gap: 6px; }
+      .stat strong { font-size: 22px; }
+      .stat span { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Panel de Capitanes</h1>
+  <p>Departamento de Contabilidad</p>
+</header>
+
+<main>
+  <section class="panel">
+    <div class="controls">
+      <div>
+        <label for="department">Departamento</label>
+        <select id="department">
+          <option value="all">Todos</option>
+          <option value="box">Cajas de Contribución</option>
+          <option value="info">Punto de Información</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="sort">Ordenar por</label>
+        <select id="sort">
+          <option value="time">Horario (más temprano primero)</option>
+          <option value="name">Nombre (A-Z)</option>
+          <option value="assignment">Asignación</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="search">Buscar voluntario</label>
+        <input id="search" type="search"
+               placeholder="Escriba un nombre...">
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="stats">
+      <div class="stat">
+        <strong id="total">0</strong>
+        <span>Asignaciones</span>
+      </div>
+      <div class="stat">
+        <strong id="boxes">0</strong>
+        <span>Cajas</span>
+      </div>
+      <div class="stat">
+        <strong id="booths">0</strong>
+        <span>Información</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Horario completo</h2>
+    <p id="message" class="status">Cargando horario...</p>
+    <div id="assignments"></div>
+  </section>
+</main>
+
+<script>
+  let schedule = [];
+
+  const department = document.getElementById('department');
+  const sort = document.getElementById('sort');
+  const search = document.getElementById('search');
+
+  function normalize(value) {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function escapeHtml(value) {
+    const div = document.createElement('div');
+    div.textContent = String(value || '');
+    return div.innerHTML;
+  }
+
+  function parseCSV(text) {
+    const rows = [];
+    let row = [];
+    let cell = '';
+    let quoted = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+
+      if (c === '"' && quoted && text[i + 1] === '"') {
+        cell += '"';
+        i++;
+      } else if (c === '"') {
+        quoted = !quoted;
+      } else if (c === ',' && !quoted) {
+        row.push(cell);
+        cell = '';
+      } else if ((c === '\n' || c === '\r') && !quoted) {
+        if (c === '\r' && text[i + 1] === '\n') i++;
+        row.push(cell);
+        if (row.some(v => v.trim())) rows.push(row);
+        row = [];
+        cell = '';
+      } else {
+        cell += c;
+      }
+    }
+
+    if (cell || row.length) {
+      row.push(cell);
+      if (row.some(v => v.trim())) rows.push(row);
+    }
+
+    const headers = (rows.shift() || []).map(h => h.trim());
+
+    return rows.map(values => {
+      const record = {};
+      headers.forEach((h, i) => {
+        record[h] = (values[i] || '').trim();
+      });
+      return record;
+    });
+  }
+
+  function startMinutes(time) {
+    const start = String(time || '').split(/\s*[-–]\s*/)[0].trim();
+    const match = start.match(/(\d{1,2}):(\d{2})\s*(am|pm)/i);
+
+    if (!match) return 9999;
+
+    let hour = Number(match[1]) % 12;
+    if (match[3].toLowerCase() === 'pm') hour += 12;
+
+    return hour * 60 + Number(match[2]);
+  }
+
+  function isInfo(row) {
+    return normalize(row.Type).includes('informacion');
+  }
+
+  function render() {
+    const query = normalize(search.value);
+
+    let rows = schedule.filter(row => {
+      const type = isInfo(row) ? 'info' : 'box';
+
+      const matchesDepartment =
+        department.value === 'all' || department.value === type;
+
+      const matchesSearch =
+        normalize(row.Volunteer).includes(query);
+
+      return normalize(row.Status) === 'asignado' &&
+        matchesDepartment && matchesSearch;
+    });
+
+    rows.sort((a, b) => {
+      if (sort.value === 'name') {
+        return a.Volunteer.localeCompare(b.Volunteer, 'es');
+      }
+
+      if (sort.value === 'assignment') {
+        return a.Assignment.localeCompare(b.Assignment, 'es');
+      }
+
+      return startMinutes(a.Time) - startMinutes(b.Time) ||
+        a.Assignment.localeCompare(b.Assignment, 'es');
+    });
+
+    document.getElementById('total').textContent = rows.length;
+    document.getElementById('boxes').textContent =
+      rows.filter(r => !isInfo(r)).length;
+    document.getElementById('booths').textContent =
+      rows.filter(isInfo).length;
+
+    const container = document.getElementById('assignments');
+    const message = document.getElementById('message');
+
+    if (!rows.length) {
+      container.innerHTML = '';
+      message.textContent = 'No se encontraron asignaciones.';
+      return;
+    }
+
+    message.textContent = '';
+
+    container.innerHTML = rows.map(row => `
+      <article class="assignment ${isInfo(row) ? 'info' : ''}">
+        <h3>${escapeHtml(row.Volunteer)}</h3>
+        <p class="time">${escapeHtml(row.Time)}</p>
+        <p><strong>Departamento:</strong>
+          ${escapeHtml(row.Type)}</p>
+        <p><strong>Asignación:</strong>
+          ${escapeHtml(row.Assignment)}</p>
+        <p><strong>Turno:</strong>
+          ${escapeHtml(row.Shift)}</p>
+        <p><strong>Congregación:</strong>
+          ${escapeHtml(row.Congregation)}</p>
+      </article>
+    `).join('');
+  }
+
+  async function loadSchedule() {
+    try {
+      const response = await fetch(
+        'schedule.csv?t=' + Date.now(),
+        { cache: 'no-store' }
+      );
+
+      if (!response.ok) throw new Error('Error al descargar CSV');
+
+      schedule = parseCSV(await response.text());
+
+      if (!schedule.length ||
+          !['Type', 'Time', 'Volunteer', 'Status']
+            .every(h => Object.hasOwn(schedule[0], h))) {
+        throw new Error('Formato de horario no válido');
+      }
+
+      render();
+    } catch (error) {
+      console.error(error);
+      document.getElementById('message').textContent =
+        'No se pudo cargar el horario. Actualice la página.';
+      document.getElementById('message').className = 'error';
+    }
+  }
+
+  [department, sort, search].forEach(element => {
+    element.addEventListener(
+      element === search ? 'input' : 'change',
+      render
+    );
+  });
+
+  loadSchedule();
+</script>
+</body>
+</html>
